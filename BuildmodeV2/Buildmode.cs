@@ -205,7 +205,7 @@ namespace BuildmodeV2
                         }
                     }
                     if (count <= 5 && lastItem != null)
-                        player.GiveItem(lastItem.type, lastItem.Name, lastItem.width, lastItem.height, lastItem.stack);
+                        player.GiveItemCheck(lastItem.type, lastItem.Name, lastItem.stack);
                     break;
                 case PacketTypes.Tile:
                     count = 0;
@@ -225,7 +225,7 @@ namespace BuildmodeV2
                             }
                         }
                         if (count <= 5 && lastItem != null)
-                            player.GiveItem(lastItem.type, lastItem.Name, lastItem.width, lastItem.height, lastItem.stack);
+                            player.GiveItemCheck(lastItem.type, lastItem.Name, lastItem.stack);
                     }
                     else if (type == 5 || type == 10 || type == 12 || type == 16)
                     {
@@ -235,7 +235,7 @@ namespace BuildmodeV2
                                 count += i.stack;
                         }
                         if (count <= 5)
-                            player.GiveItem(530, "Wire", player.TPlayer.width, player.TPlayer.height, 1000 - count);
+                            player.GiveItemCheck(530, "Wire", 1000 - count);
                     }
                     else if (type == 8)
                     {
@@ -245,7 +245,7 @@ namespace BuildmodeV2
                                 count += i.stack;
                         }
                         if (count <= 5)
-                            player.GiveItem(849, "Actuator", player.TPlayer.width, player.TPlayer.height, 1000 - count);
+                            player.GiveItemCheck(849, "Actuator", 1000 - count);
                     }
                     break;
                 case PacketTypes.PlayerHurtV2:
@@ -293,11 +293,11 @@ namespace BuildmodeV2
         {
             var username = String.Join(" ", args.Parameters);
 
-            var matchedPlayers = TShock.Utils.FindPlayer(username);
+            var matchedPlayers = TSPlayer.FindByNameOrID(username);
             if (matchedPlayers.Count < 1)
                 args.Player.SendErrorMessage("No players matched that name!");
             else if (matchedPlayers.Count > 1)
-                TShock.Utils.SendMultipleMatchError(args.Player, matchedPlayers.Select(p => p.Name));
+                args.Player.SendMultipleMatchError(matchedPlayers.Select(p => p.Name));
             else
             {
                 if (matchedPlayers[0].GetData<bool>("buildmode"))
