@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Streams;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -116,17 +117,19 @@ namespace BuildmodeV2
                 case 7: //WorldInfo
                     using (var writer = new BinaryWriter(new MemoryStream(args.Buffer, args.Offset, args.Count)))
                     {
-                        writer.BaseStream.Position += 3;
-                        writer.Write(27000); //Time
+                        writer.BaseStream.Position += 3; // Skip length ushort, msgid byte.
+                        writer.Write(27000); // Overwrite Time int. 
                         writer.Write(new BitsByte(true)); // isDayTime = true
-                        writer.BaseStream.Position += 9;
+                        writer.BaseStream.Position += 9; // Skip Moon Phase, max tiles x/y
                         writer.Write((short)Main.maxTilesY); //worldSurface
                         writer.Write((short)Main.maxTilesY); //rockLayer
-                        writer.BaseStream.Position += 4;
-                        writer.Write(Main.worldName); //worldName
-                        writer.BaseStream.Position += 73;
+                        writer.BaseStream.Position += 4; // skip worldID int
+                        writer.Write(Main.worldName); // write worldName to simply skip unkown byte amount
+                        writer.BaseStream.Position += 42;
+                        writer.Write((Single)0); //wind 
+                        writer.BaseStream.Position += 46;
                         writer.Write((Single)0); //Rain
-                        writer.BaseStream.Position += 14;
+                        writer.BaseStream.Position += 30;
                         writer.Write((Single)0); //Sandstorm
                     }
                     break;
@@ -150,7 +153,7 @@ namespace BuildmodeV2
                     using (var writer = new BinaryWriter(new MemoryStream(args.Buffer, args.Offset, args.Count)))
                     {
                         //Hide all NPCs at 0,0
-                        writer.BaseStream.Position += 5;
+                        writer.BaseStream.Position += 5; // skip length, msgid and npc id.
                         writer.Write((Single)0); //PosX
                         writer.Write((Single)0); //PosY
                     }
@@ -162,7 +165,7 @@ namespace BuildmodeV2
                     {
                         reader.ReadBytes(3);
                         projectileID = reader.ReadInt16();
-                        reader.ReadBytes(22);
+                        reader.ReadBytes(16);
                         projectileOwner = reader.ReadByte();
                     }
                     if (Main.projectile.First(e => e.identity == projectileID && e.owner == projectileOwner).friendly)
@@ -170,7 +173,7 @@ namespace BuildmodeV2
                     using (var writer = new BinaryWriter(new MemoryStream(args.Buffer, args.Offset, args.Count)))
                     {
                         writer.BaseStream.Position += 3;
-                        writer.BaseStream.Position += 25;
+                        writer.BaseStream.Position += 19;
                         writer.Write((Int16)0); //Type
                     }
                     break;
@@ -209,43 +212,48 @@ namespace BuildmodeV2
                     break;
                 case PacketTypes.Tile:
                     count = 0;
-                    type = args.Msg.readBuffer[args.Index];
-                    if ((type == 1 || type == 3) && player.TPlayer.inventory[player.TPlayer.selectedItem].type != 213)
+
+                    using (var data = new MemoryStream(args.Msg.readBuffer, args.Index, args.Length))
                     {
-                        int tile = args.Msg.readBuffer[args.Index + 9];
-                        if (player.SelectedItem.tileWand > 0)
-                            tile = player.SelectedItem.tileWand;
-                        lastItem = null;
-                        foreach (Item i in player.TPlayer.inventory)
+                        type = data.ReadByte();
+                        data.ReadInt16();
+                        data.ReadInt16();
+
+                        if ((type == 1 || type == 3) && player.TPlayer.inventory[player.TPlayer.selectedItem].type != 213)
                         {
-                            if ((type == 1 && i.createTile == tile) || (type == 3 && i.createWall == tile))
+                            short editData = data.ReadInt16();
+                            if (player.SelectedItem.tileWand > 0)
+                                editData = (short)player.SelectedItem.tileWand;
+
+                            lastItem = player.SelectedItem;
+                            if ((type == 1 && player.SelectedItem.createTile == editData) || (type == 3 && player.SelectedItem.createWall == editData))
                             {
-                                lastItem = i;
-                                count += i.stack;
+                                
+                                count += player.SelectedItem.stack;
                             }
+                            if (count <= 1 && lastItem != null)
+                                player.GiveItemCheck(lastItem.type, lastItem.Name, 999);
                         }
-                        if (count <= 5 && lastItem != null)
-                            player.GiveItemCheck(lastItem.type, lastItem.Name, lastItem.stack);
-                    }
-                    else if (type == 5 || type == 10 || type == 12 || type == 16)
-                    {
-                        foreach (Item i in player.TPlayer.inventory)
+                        else if (type == 5 || type == 10 || type == 12 || type == 16)
                         {
-                            if (i.type == 530)
-                                count += i.stack;
+                            foreach (Item i in player.TPlayer.inventory)
+                            {
+                                if (i.type == 530)
+                                    count += i.stack;
+                            }
+                            if (count <= 5)
+                                player.GiveItemCheck(530, "Wire", 1000 - count);
                         }
-                        if (count <= 5)
-                            player.GiveItemCheck(530, "Wire", 1000 - count);
-                    }
-                    else if (type == 8)
-                    {
-                        foreach (Item i in player.TPlayer.inventory)
+                        else if (type == 8)
                         {
-                            if (i.type == 849)
-                                count += i.stack;
+                            foreach (Item i in player.TPlayer.inventory)
+                            {
+                                if (i.type == 849)
+                                    count += i.stack;
+                            }
+                            if (count <= 5)
+                                player.GiveItemCheck(849, "Actuator", 1000 - count);
                         }
-                        if (count <= 5)
-                            player.GiveItemCheck(849, "Actuator", 1000 - count);
                     }
                     break;
                 case PacketTypes.PlayerHurtV2:
