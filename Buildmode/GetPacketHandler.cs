@@ -44,6 +44,8 @@ namespace Buildmode
             {
                 e.Player.ToggleBuildMode();
                 e.Player.SendInfoMessage($"You are in PvP mode. Buildmode has been disabled!");
+                /// Send a WorldInfo packet to update time/background immediately.
+                NetMessage.SendData((int)PacketTypes.WorldInfo, e.Player.Index);
             }
         }
         /// <summary>
