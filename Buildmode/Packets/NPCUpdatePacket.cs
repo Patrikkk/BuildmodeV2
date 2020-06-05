@@ -15,16 +15,12 @@ namespace Buildmode.Packets
         {
             using (var writer = new BinaryWriter(Stream))
             {
-                writer.BaseStream.Position = 0L;
-                long startPos = writer.BaseStream.Position;
-                writer.BaseStream.Position += 2L;
-                writer.Write((byte)PacketTypes.NpcUpdate);
+                writer.BaseStream.Position += 3;
 
                 NPC nPC2 = Main.npc[npcIndex];
                 writer.Write(npcIndex);
                 writer.WriteVector2(position);
                 writer.WriteVector2(velocity);
-                writer.BaseStream.Position = writer.BaseStream.Length;
                 /*writer.Write((ushort)nPC2.target);
                 int num19 = nPC2.life;
                 if (!nPC2.active)
@@ -98,11 +94,6 @@ namespace Buildmode.Packets
                     writer.Write((byte)nPC2.releaseOwner);
                 }
                 */
-
-                int length = (int)writer.BaseStream.Position;
-                writer.BaseStream.Position = startPos;
-                writer.Write((short)length);
-                writer.BaseStream.Position = length;
             }
         }
 

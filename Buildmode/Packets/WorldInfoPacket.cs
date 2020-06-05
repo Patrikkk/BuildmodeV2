@@ -113,18 +113,24 @@ namespace Buildmode.Packets
                 writer.Write(time);
                 writer.Write(BitsByte1);
                 writer.Write(moonPhase);
+
                 writer.Write(maxTilesX);
                 writer.Write(maxTilesY);
                 writer.Write(spawnTileX);
                 writer.Write(spawnTileY);
+
                 writer.Write(worldSurface);
                 writer.Write(rockLayer);
+
                 writer.Write(worldID);
                 writer.Write(worldName);
+
                 writer.Write(GameMode);
                 writer.Write(UniqueId.ToByteArray());
                 writer.Write(WorldGeneratorVersion);
+
                 writer.Write(moonType);
+
                 writer.Write(treeBG1);
                 writer.Write(treeBG2);
                 writer.Write(treeBG3);
@@ -138,9 +144,11 @@ namespace Buildmode.Packets
                 writer.Write(oceanBG);
                 writer.Write(mushroomBG);
                 writer.Write(underworldBG);
+
                 writer.Write(iceBackStyle);
                 writer.Write(jungleBackStyle);
                 writer.Write(hellBackStyle);
+
                 writer.Write(windSpeedTarget);
                 writer.Write(numClouds);
                 for (int i = 0; i < 3; i++)
@@ -165,6 +173,7 @@ namespace Buildmode.Packets
                     maxRaining = 0f;
                 }
                 writer.Write(maxRaining);
+
                 writer.Write(BitsByte2);
                 writer.Write(BitsByte3);
                 writer.Write(BitsByte4);
@@ -172,6 +181,7 @@ namespace Buildmode.Packets
                 writer.Write(BitsByte6);
                 writer.Write(BitsByte7);
                 writer.Write(BitsByte8);
+
                 writer.Write(Copper);
                 writer.Write(Iron);
                 writer.Write(Silver);
@@ -179,6 +189,7 @@ namespace Buildmode.Packets
                 writer.Write(Cobalt);
                 writer.Write(Mythril);
                 writer.Write(Adamantite);
+
                 writer.Write(invasionType);
                 writer.Write(LobbyId);
                 writer.Write(IntendedSeverity);

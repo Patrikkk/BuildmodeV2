@@ -28,22 +28,13 @@ namespace Buildmode.Packets
         {
             using (var writer = new BinaryWriter(Stream))
             {
-                writer.BaseStream.Position = 0L;
-                long startPos = writer.BaseStream.Position;
-                writer.BaseStream.Position += 2L;
-                writer.Write((byte)PacketTypes.ProjectileNew);
+                writer.BaseStream.Position += 2;
 
                 writer.Write(Index);
                 writer.WriteVector2(Position);
                 writer.WriteVector2(Velocity);
                 writer.Write(Owner);
                 writer.Write(Type);
-
-
-                int length = (int)writer.BaseStream.Position;
-                writer.BaseStream.Position = startPos;
-                writer.Write((short)length);
-                writer.BaseStream.Position = length;
             }
         }
 
