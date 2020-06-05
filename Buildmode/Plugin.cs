@@ -163,21 +163,42 @@ namespace Buildmode
 
         private void BMCheck(CommandArgs args)
         {
-            var username = String.Join(" ", args.Parameters);
 
-            var matchedPlayers = TSPlayer.FindByNameOrID(username);
-            if (matchedPlayers.Count < 1)
-                args.Player.SendErrorMessage("No players matched that name!");
-            else if (matchedPlayers.Count > 1)
-                args.Player.SendMultipleMatchError(matchedPlayers.Select(p => p.Name));
+            if (args.Parameters.Count == 0)
+            {
+                args.Player.SendInfoMessage($"You {(args.Player.IsBuildModeOn() ? "" : "do not")} have Buildmode enabled!");
+                return;
+            }
+
+            bool checkAll = false;
+            if (args.Parameters.Contains("-all"))
+            {
+                args.Parameters.Remove("-all");
+                checkAll = true;
+            }
+
+            if (checkAll)
+            {
+                args.Player.SendInfoMessage("The following players have buildmode enabled:\n{0}",
+                   string.Join(", ", TShock.Players.Where(e => e != null && e.Active && e.IsBuildModeOn()).Select(e => e.Name)));
+            }
             else
             {
-                if (matchedPlayers[0].IsBuildModeOn())
-                {
-                    args.Player.SendInfoMessage($"{matchedPlayers[0].Name} has Buildmode enabled!");
-                }
+                var username = String.Join(" ", args.Parameters);
+                var matchedPlayers = TSPlayer.FindByNameOrID(username);
+                if (matchedPlayers.Count < 1)
+                    args.Player.SendErrorMessage("No players matched that name!");
+                else if (matchedPlayers.Count > 1)
+                    args.Player.SendMultipleMatchError(matchedPlayers.Select(p => p.Name));
                 else
-                    args.Player.SendInfoMessage($"{matchedPlayers[0].Name} does not have Buildmode enabled.");
+                {
+                    if (matchedPlayers[0].IsBuildModeOn())
+                    {
+                        args.Player.SendInfoMessage($"{matchedPlayers[0].Name} has Buildmode enabled!");
+                    }
+                    else
+                        args.Player.SendInfoMessage($"{matchedPlayers[0].Name} does not have Buildmode enabled.");
+                }
             }
         }
     }
