@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+*.suo
+/.vs
+/BuildmodeV2/bin/Debug/TShockAPI.dll
+/BuildmodeV2/bin/Debug/TerrariaServer.exe
+/BuildmodeV2/bin/Debug/OTAPI.dll
+/BuildmodeV2/obj

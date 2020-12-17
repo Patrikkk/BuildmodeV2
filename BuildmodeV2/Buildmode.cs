@@ -13,7 +13,7 @@ using TShockAPI;
 
 namespace BuildmodeV2
 {
-    [ApiVersion(2,1)]
+    [ApiVersion(2, 1)]
     public class Buildmode : TerrariaPlugin
     {
         public override string Author => "Zaicon";
@@ -124,9 +124,9 @@ namespace BuildmodeV2
                         writer.Write((short)Main.maxTilesY); //rockLayer
                         writer.BaseStream.Position += 4;
                         writer.Write(Main.worldName); //worldName
-                        writer.BaseStream.Position += 73;
+                        writer.BaseStream.Position += 92;
                         writer.Write((Single)0); //Rain
-                        writer.BaseStream.Position += 14;
+                        writer.BaseStream.Position += 30;
                         writer.Write((Single)0); //Sandstorm
                     }
                     break;
@@ -162,7 +162,7 @@ namespace BuildmodeV2
                     {
                         reader.ReadBytes(3);
                         projectileID = reader.ReadInt16();
-                        reader.ReadBytes(22);
+                        reader.ReadBytes(16);
                         projectileOwner = reader.ReadByte();
                     }
                     if (Main.projectile.First(e => e.identity == projectileID && e.owner == projectileOwner).friendly)
@@ -170,7 +170,7 @@ namespace BuildmodeV2
                     using (var writer = new BinaryWriter(new MemoryStream(args.Buffer, args.Offset, args.Count)))
                     {
                         writer.BaseStream.Position += 3;
-                        writer.BaseStream.Position += 25;
+                        writer.BaseStream.Position += 19;
                         writer.Write((Int16)0); //Type
                     }
                     break;
@@ -193,7 +193,7 @@ namespace BuildmodeV2
                 case PacketTypes.PaintTile:
                 case PacketTypes.PaintWall:
                     int count = 0;
-                    int type = args.Msg.readBuffer[args.Index + 8];
+                    int type = args.Msg.readBuffer[args.Index + 4];
 
                     Item lastItem = null;
                     foreach (Item i in player.TPlayer.inventory)
@@ -205,29 +205,29 @@ namespace BuildmodeV2
                         }
                     }
                     if (count <= 5 && lastItem != null)
-                        player.GiveItem(lastItem.type, lastItem.Name, lastItem.width, lastItem.height, lastItem.stack);
+                        player.GiveItem(lastItem.type, lastItem.stack);
                     break;
                 case PacketTypes.Tile:
                     count = 0;
                     type = args.Msg.readBuffer[args.Index];
-                    if ((type == 1 || type == 3) && player.TPlayer.inventory[player.TPlayer.selectedItem].type != 213)
+                    if ((type == 1 || type == 3 || type == 21 || type == 22) && player.TPlayer.inventory[player.TPlayer.selectedItem].type != 213) // Tile or Wall or ReplaceTile or ReplaceWall
                     {
-                        int tile = args.Msg.readBuffer[args.Index + 9];
+                        short tile = args.Msg.readBuffer[args.Index + 5];
                         if (player.SelectedItem.tileWand > 0)
-                            tile = player.SelectedItem.tileWand;
+                            tile = (short)player.SelectedItem.tileWand;
                         lastItem = null;
                         foreach (Item i in player.TPlayer.inventory)
                         {
-                            if ((type == 1 && i.createTile == tile) || (type == 3 && i.createWall == tile))
+                            if (((type == 1 || type == 21) && i.createTile == tile) || ((type == 3 || type == 22) && i.createWall == tile))
                             {
                                 lastItem = i;
                                 count += i.stack;
                             }
                         }
                         if (count <= 5 && lastItem != null)
-                            player.GiveItem(lastItem.type, lastItem.Name, lastItem.width, lastItem.height, lastItem.stack);
+                            player.GiveItem(lastItem.type, lastItem.maxStack - count);
                     }
-                    else if (type == 5 || type == 10 || type == 12 || type == 16)
+                    else if (type == 5 || type == 10 || type == 12 || type == 16) // Wire, Wire2, Wire3, Wire4
                     {
                         foreach (Item i in player.TPlayer.inventory)
                         {
@@ -235,9 +235,9 @@ namespace BuildmodeV2
                                 count += i.stack;
                         }
                         if (count <= 5)
-                            player.GiveItem(530, "Wire", player.TPlayer.width, player.TPlayer.height, 1000 - count);
+                            player.GiveItem(530, 1000 - count);
                     }
-                    else if (type == 8)
+                    else if (type == 8) // Actuator
                     {
                         foreach (Item i in player.TPlayer.inventory)
                         {
@@ -245,7 +245,7 @@ namespace BuildmodeV2
                                 count += i.stack;
                         }
                         if (count <= 5)
-                            player.GiveItem(849, "Actuator", player.TPlayer.width, player.TPlayer.height, 1000 - count);
+                            player.GiveItem(849, 1000 - count);
                     }
                     break;
                 case PacketTypes.PlayerHurtV2:
@@ -258,7 +258,7 @@ namespace BuildmodeV2
                         player.Heal(damage);
                         player.TPlayer.statLife = player.TPlayer.statLifeMax2;
                     }
-                        break;
+                    break;
             }
         }
 
@@ -291,13 +291,13 @@ namespace BuildmodeV2
 
         private void BMCheck(CommandArgs args)
         {
-            var username = String.Join(" ", args.Parameters);
+            var username = string.Join(" ", args.Parameters);
 
-            var matchedPlayers = TShock.Utils.FindPlayer(username);
+            var matchedPlayers = TSPlayer.FindByNameOrID(username);
             if (matchedPlayers.Count < 1)
                 args.Player.SendErrorMessage("No players matched that name!");
             else if (matchedPlayers.Count > 1)
-                TShock.Utils.SendMultipleMatchError(args.Player, matchedPlayers.Select(p => p.Name));
+                args.Player.SendMultipleMatchError(matchedPlayers.Select(p => p.Name));
             else
             {
                 if (matchedPlayers[0].GetData<bool>("buildmode"))
